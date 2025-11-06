@@ -1,0 +1,3 @@
+npm install express cors reflect-metadata typeorm pg dotenv bcrypt jsonwebtoken
+npm install -D typescript ts-node-dev @types/express @types/node @types/bcrypt @types/jsonwebtoken
+npx tsc --init
