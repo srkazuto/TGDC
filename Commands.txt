@@ -1,3 +1,30 @@
+Scripts Package.json : "scripts": {
+  "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+  "build": "tsc",
+  "start": "node dist/index.js"
+}
+
+tsConfig 
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true
+  }
+}
+
+
+Dependencias
+
 npm install express cors reflect-metadata typeorm pg dotenv bcrypt jsonwebtoken
 npm install -D typescript ts-node-dev @types/express @types/node @types/bcrypt @types/jsonwebtoken
 npx tsc --init
+
+

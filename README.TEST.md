@@ -1,3 +1,12 @@
+##  Estructura de archivos temporal ##
 
-## Estructura de archivos inicial cambiare mas adelante ##
-![alt text](image.png)
+backend/src/
+├── controllers/
+├── entities/
+├── routes/
+├── middleware/
+├── database/
+├── utils/
+└── index.ts
+
+
