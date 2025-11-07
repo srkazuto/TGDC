@@ -18,15 +18,13 @@ export const createTask = async (req: Request, res: Response) => {
 
     const task = taskRepo.create({ title, description, user });
     await taskRepo.save(task);
-
-    res.json({ message: "Tarea creada exitosamente", task });
+    res.json({ message: "Tarea creada" });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error al crear tarea" });
   }
 };
 
-// Obtener todas las tareas del usuario
+// Obtener tareas
 export const getTasks = async (req: Request, res: Response) => {
   try {
     const sessionUser = req.session.user;
@@ -36,68 +34,29 @@ export const getTasks = async (req: Request, res: Response) => {
       where: { user: { id: sessionUser.id } },
       relations: ["user"],
     });
-
     res.json(tasks);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Error al obtener tareas" });
-  }
-};
-
-// Obtener tarea por ID (solo del usuario)
-export const getTaskById = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const sessionUser = req.session.user;
-    if (!sessionUser) return res.status(401).json({ message: "No autorizado" });
-
-    const task = await taskRepo.findOne({
-      where: { id: parseInt(id!), user: { id: sessionUser.id } },
-      relations: ["user"],
-    });
-
-    if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
-    res.json(task);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al obtener tarea" });
-  }
-};
-
-// Actualizar tarea
-export const updateTask = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { title, description } = req.body;
-    const sessionUser = req.session.user;
-    if (!sessionUser) return res.status(401).json({ message: "No autorizado" });
-
-    const task = await taskRepo.findOne({
-      where: { id: parseInt(id!), user: { id: sessionUser.id } },
-    });
-
-    if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
-
-    task.title = title || task.title;
-    task.description = description || task.description;
-
-    await taskRepo.save(task);
-    res.json({ message: "Tarea actualizada correctamente", task });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al actualizar tarea" });
   }
 };
 
 // Eliminar tarea
 export const deleteTask = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const idParam = req.params.id;
+    if (!idParam)
+      return res.status(400).json({ message: "ID es obligatorio" });
+
+    const numericId = parseInt(idParam);
+    if (isNaN(numericId))
+      return res.status(400).json({ message: "ID debe ser un número válido" });
+
     const sessionUser = req.session.user;
     if (!sessionUser) return res.status(401).json({ message: "No autorizado" });
 
     const task = await taskRepo.findOne({
-      where: { id: parseInt(id!), user: { id: sessionUser.id } },
+      where: { id: numericId, user: { id: sessionUser.id } },
+      relations: ["user"],
     });
 
     if (!task) return res.status(404).json({ message: "Tarea no encontrada" });
@@ -105,7 +64,6 @@ export const deleteTask = async (req: Request, res: Response) => {
     await taskRepo.remove(task);
     res.json({ message: "Tarea eliminada correctamente" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error al eliminar tarea" });
+    res.status(500).json({ message: "Error al eliminar tarea", error });
   }
 };
