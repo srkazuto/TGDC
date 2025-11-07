@@ -14,7 +14,6 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 app.use(logger);
 
-// Configurar sesión
 app.use(
   session({
     secret: 'mi-secreto',
@@ -23,17 +22,16 @@ app.use(
   })
 );
 
-// Rutas
-app.use("/api/users", userRoutes);
-app.use("/api/tasks", taskRoutes);
-
 const PORT = process.env.PORT || 3000;
 
 AppDataSource.initialize()
   .then(() => {
     console.log("✅ Base de datos conectada");
+
+    // Rutas
+    app.use("/api/users", userRoutes);
+    app.use("/api/tasks", taskRoutes);
+
     app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
   })
-  .catch((err) => {
-    console.error("❌ Error al conectar la base de datos:", err);
-  });
+  .catch((err) => console.error("❌ Error al conectar la base de datos:", err));

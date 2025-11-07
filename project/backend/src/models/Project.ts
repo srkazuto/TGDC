@@ -1,22 +1,22 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from './User';
-import { Comment } from './Comment';
+import { Task } from './Task';
 
 @Entity()
-export class Task {
+export class Project {
   @PrimaryGeneratedColumn()
   id!: number;
 
   @Column()
-  title!: string;
+  name!: string;
 
   @Column({ nullable: true })
   description?: string;
 
-  @ManyToOne(() => User, user => user.tasks, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, user => user.projects, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user!: User;
 
-  @OneToMany(() => Comment, comment => comment.task)
-  comments!: Comment[];
+  @OneToMany(() => Task, task => task.user)
+  tasks!: Task[];
 }

@@ -5,7 +5,6 @@ import { User } from "../models/User";
 
 const userRepository = AppDataSource.getRepository(User);
 
-// Registro
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
@@ -24,7 +23,6 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
-// Login
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -36,14 +34,13 @@ export const loginUser = async (req: Request, res: Response) => {
     if (!match) return res.status(400).json({ message: "Contraseña incorrecta" });
 
     req.session.user = { id: user.id, name: user.name, email: user.email };
-    res.json({ message: "Inicio de sesión exitoso",user : {id : user.id, name: user.name, email : user.id} });
+    res.json({ message: "Inicio de sesión exitoso", user: req.session.user });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error al iniciar sesión" });
   }
 };
 
-// Logout
 export const logoutUser = (req: Request, res: Response) => {
   req.session.destroy((err) => {
     if (err) return res.status(500).json({ message: "Error al cerrar sesión" });

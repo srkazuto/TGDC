@@ -6,12 +6,10 @@ import { User } from "../models/User";
 const taskRepo = AppDataSource.getRepository(Task);
 const userRepo = AppDataSource.getRepository(User);
 
-// Crear tarea
 export const createTask = async (req: Request, res: Response) => {
   try {
     const { title, description } = req.body;
     const sessionUser = req.session.user;
-
     if (!sessionUser) return res.status(401).json({ message: "No autorizado" });
 
     const user = await userRepo.findOneBy({ id: sessionUser.id });
@@ -27,7 +25,6 @@ export const createTask = async (req: Request, res: Response) => {
   }
 };
 
-// Listar tareas del usuario logueado
 export const getTasks = async (req: Request, res: Response) => {
   try {
     const sessionUser = req.session.user;
@@ -35,7 +32,7 @@ export const getTasks = async (req: Request, res: Response) => {
 
     const tasks = await taskRepo.find({
       where: { user: { id: sessionUser.id } },
-      relations :["user"], // incluyo info del usuario
+      relations: ["user"],
     });
 
     res.json(tasks);
