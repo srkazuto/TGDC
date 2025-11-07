@@ -44,3 +44,9 @@ por si lanza el error de key duplicy
 
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
+
+
+
+frontend Dependencias
+
+npm install react-router-dom axios react-hook-form
