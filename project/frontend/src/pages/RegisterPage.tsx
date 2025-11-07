@@ -1,36 +1,25 @@
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-type RegisterData = {
+type RegisterForm = {
   name: string;
   email: string;
   password: string;
 };
 
 export default function RegisterPage() {
-  const { register, handleSubmit } = useForm<RegisterData>();
+  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>();
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const onSubmit = async (data: RegisterData) => {
+  const onSubmit = async (data: RegisterForm) => {
+    setError("");
     try {
-      if (!data.name || !data.email || !data.password) {
-        setError("Por favor completa todos los campos");
-        return;
-      }
-
-      if (!data.email.includes("@")) {
-        setError("Correo inválido");
-        return;
-      }
-
-      await axios.post("http://localhost:3000/api/users/register", data, {
-        withCredentials: true,
-      });
-
-      alert("Usuario registrado correctamente");
+      const res = await axios.post("http://localhost:3000/api/users/register", data);
+      console.log(res.data);
+      alert("Usuario registrado correctamente!");
       navigate("/login");
     } catch (err: any) {
       setError(err.response?.data?.message || "Error al registrar usuario");
@@ -38,50 +27,52 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="bg-white p-8 rounded-lg shadow-md w-80"
-      >
-        <h2 className="text-2xl font-bold mb-4 text-center">Registro</h2>
+    <div style={{ maxWidth: "400px", margin: "50px auto", textAlign: "center" }}>
+      <h2>Registro</h2>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div style={{ marginBottom: "15px" }}>
+          <label>Nombre:</label>
+          <input
+            type="text"
+            {...register("name", { required: "El nombre es obligatorio" })}
+            style={{ display: "block", width: "100%", marginTop: "5px" }}
+          />
+          {errors.name && <p style={{ color: "red" }}>{errors.name.message}</p>}
+        </div>
 
-        <input
-          {...register("name")}
-          type="text"
-          placeholder="Nombre"
-          className="border p-2 w-full mb-3 rounded"
-        />
+        <div style={{ marginBottom: "15px" }}>
+          <label>Email:</label>
+          <input
+            type="email"
+            {...register("email", { required: "El email es obligatorio" })}
+            style={{ display: "block", width: "100%", marginTop: "5px" }}
+          />
+          {errors.email && <p style={{ color: "red" }}>{errors.email.message}</p>}
+        </div>
 
-        <input
-          {...register("email")}
-          type="email"
-          placeholder="Correo electrónico"
-          className="border p-2 w-full mb-3 rounded"
-        />
+        <div style={{ marginBottom: "15px" }}>
+          <label>Contraseña:</label>
+          <input
+            type="password"
+            {...register("password", { required: "La contraseña es obligatoria" })}
+            style={{ display: "block", width: "100%", marginTop: "5px" }}
+          />
+          {errors.password && <p style={{ color: "red" }}>{errors.password.message}</p>}
+        </div>
 
-        <input
-          {...register("password")}
-          type="password"
-          placeholder="Contraseña"
-          className="border p-2 w-full mb-3 rounded"
-        />
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 w-full rounded hover:bg-blue-600"
-        >
+        <button type="submit" style={{ width: "100%", padding: "10px" }}>
           Registrarse
         </button>
-
-        <p className="text-sm text-center mt-3">
-          ¿Ya tienes una cuenta?{" "}
-          <a href="/login" className="text-blue-500 hover:underline">
-            Inicia sesión
-          </a>
-        </p>
       </form>
+
+      <p style={{ marginTop: "15px" }}>
+        ¿Ya tienes una cuenta?{" "}
+        <Link to="/login" style={{ color: "blue", textDecoration: "underline" }}>
+          Inicia sesión aquí
+        </Link>
+      </p>
     </div>
   );
 }

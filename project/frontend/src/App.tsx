@@ -1,51 +1,33 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import RegisterPage from "./pages/RegisterPage";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import LoginPage from "./pages/LoginPages";
+import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/Dashboard";
+import ProtectedRoute from "./components/ProtectedRoutes";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
-    // Verifica si la sesión está activa al cargar
-    const checkSession = async () => {
-      try {
-        const res = await axios.get("http://localhost:3000/api/users/me", {
-          withCredentials: true,
-        });
-        setIsLoggedIn(!!res.data.user);
-      } catch {
-        setIsLoggedIn(false);
-      }
-    };
-    checkSession();
+    const storedLogin = localStorage.getItem("loggedIn") === "true";
+    setLoggedIn(storedLogin);
   }, []);
 
-  if (isLoggedIn === null) return <p>Cargando...</p>; // mientras verifica
-
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={isLoggedIn ? <Navigate to="/dashboard" /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/login"
-          element={isLoggedIn ? <Navigate to="/dashboard" /> : <LoginPage />}
-        />
-        <Route
-          path="/register"
-          element={isLoggedIn ? <Navigate to="/dashboard" /> : <RegisterPage />}
-        />
-        <Route
-          path="/dashboard"
-          element={isLoggedIn ? <DashboardPage /> : <Navigate to="/login" />}
-        />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/login" element={<LoginPage setLoggedIn={setLoggedIn} />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute loggedIn={loggedIn}>
+            <DashboardPage setLoggedIn={setLoggedIn} />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }
 

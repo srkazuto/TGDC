@@ -8,7 +8,11 @@ type LoginForm = {
   password: string;
 };
 
-export default function LoginPage() {
+type Props = {
+  setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+export default function LoginPage({ setLoggedIn }: Props) {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>();
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -21,7 +25,9 @@ export default function LoginPage() {
       });
       console.log(res.data);
       alert("Inicio de sesión exitoso!");
-      navigate("/dashboard"); // redirige al dashboard
+      setLoggedIn(true);
+      localStorage.setItem("loggedIn", "true");
+      navigate("/dashboard");
     } catch (err) {
       setError("Correo o contraseña incorrectos");
     }
@@ -58,7 +64,6 @@ export default function LoginPage() {
         </button>
       </form>
 
-      {/* 🔗 Enlace al registro */}
       <p style={{ marginTop: "15px" }}>
         ¿No tienes una cuenta?{" "}
         <Link to="/register" style={{ color: "blue", textDecoration: "underline" }}>
