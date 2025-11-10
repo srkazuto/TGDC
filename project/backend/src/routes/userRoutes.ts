@@ -3,21 +3,19 @@ import {
   registerUser,
   loginUser,
   logoutUser,
-  getAllUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
+  getProfile,
+  updateProfile,
 } from "../controllers/userControllers";
+import { isAuthenticated } from "../middleware/auth";
 
 const router = Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
-router.get("/", getAllUsers);
-router.get("/:id", getUserById);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
 
+// Perfil autenticado
+router.get("/profile", isAuthenticated, getProfile);
+router.put("/profile", isAuthenticated, updateProfile);
 
 export default router;

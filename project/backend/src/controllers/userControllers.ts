@@ -54,93 +54,44 @@ export const logoutUser = (req: Request, res: Response) => {
   });
 };
 
-//  Obtener todos los usuarios
-export const getAllUsers = async (req: Request, res: Response) => {
-  try {
-    const users = await userRepository.find({
-      select: ["id", "name", "email"], // ocultamos contraseñas
-    });
-    res.status(200).json(users);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error al obtener los usuarios", error });
+// ✅ Obtener perfil del usuario autenticado
+export const getProfile = (req: Request, res: Response) => {
+  if (!req.session.user) {
+    return res.status(401).json({ message: "No autorizado" });
   }
+  res.json(req.session.user);
 };
 
-//  Obtener un usuario por ID
-export const getUserById = async (req: Request, res: Response) => {
+//  Actualizar perfil del usuario autenticado
+export const updateProfile = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const numericId = parseInt(id!);
+    if (!req.session.user)
+      return res.status(401).json({ message: "No autorizado" });
 
-    if (isNaN(numericId)) {
-      return res.status(400).json({ message: "El ID debe ser un número válido" });
+    const { id } = req.session.user;
+    const { name, email, currentPassword, newPassword } = req.body;
+
+    const user = await userRepository.findOne({ where: { id } });
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+
+    // Si el usuario quiere cambiar la contraseña
+    if (newPassword) {
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if (!match)
+        return res.status(400).json({ message: "Contraseña actual incorrecta" });
+
+      user.password = await bcrypt.hash(newPassword, 10);
     }
-
-    const user = await userRepository.findOne({
-      where: { id: numericId },
-      select: ["id", "name", "email"],
-    });
-
-    if (!user)
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    res.json(user);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error al obtener el usuario", error });
-  }
-};
-
-// Actualizar usuario
-export const updateUser = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const numericId = parseInt(id!);
-
-    if (isNaN(numericId)) {
-      return res.status(400).json({ message: "El ID debe ser un número válido" });
-    }
-
-    const { name, email, password } = req.body;
-    const user = await userRepository.findOne({ where: { id: numericId } });
-
-    if (!user)
-      return res.status(404).json({ message: "Usuario no encontrado" });
 
     user.name = name || user.name;
     user.email = email || user.email;
 
-    if (password) {
-      user.password = await bcrypt.hash(password, 10);
-    }
-
     await userRepository.save(user);
-    res.json({ message: "Usuario actualizado correctamente" });
+    req.session.user = { id: user.id, name: user.name, email: user.email };
+
+    res.json({ message: "Perfil actualizado correctamente", user: req.session.user });
   } catch (error) {
-    res.status(500).json({ message: "Error al actualizar usuario", error });
+    console.error(error);
+    res.status(500).json({ message: "Error al actualizar perfil" });
   }
 };
-
-//  Eliminar usuario
-export const deleteUser = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const numericId = parseInt(id!);
-
-    if (isNaN(numericId)) {
-      return res.status(400).json({ message: "El ID debe ser un número válido" });
-    }
-
-    const user = await userRepository.findOne({ where: { id: numericId } });
-    if (!user)
-      return res.status(404).json({ message: "Usuario no encontrado" });
-
-    await userRepository.remove(user);
-    res.json({ message: "Usuario eliminado correctamente" });
-  } catch (error) {
-    res.status(500).json({ message: "Error al eliminar usuario", error });
-  }
-};
-

@@ -1,6 +1,6 @@
-// src/pages/Dashboard.tsx
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 type User = {
   id: number;
@@ -8,141 +8,144 @@ type User = {
   email: string;
 };
 
-type Task = {
-  id: number;
-  title: string;
-  description?: string;
-  userId: number;
+type Props = {
+  setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-export default function DashboardPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [userName, setUserName] = useState<string>("Usuario");
-
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserPassword, setNewUserPassword] = useState("");
-
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
+export default function DashboardPage({ setLoggedIn }: Props) {
+  const [user, setUser] = useState<User | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const storedName = localStorage.getItem("userName") || "Usuario";
-    setUserName(storedName);
-
-    fetchUsers();
-    fetchTasks();
+    fetchProfile();
   }, []);
 
-  // 🔹 Usuarios
-  const fetchUsers = async () => {
+  const fetchProfile = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/api/users", { withCredentials: true });
-      setUsers(res.data);
-    } catch (error) {
-      console.error("Error fetching users", error);
+      const res = await axios.get("http://localhost:3000/api/users/profile", {
+        withCredentials: true,
+      });
+      setUser(res.data);
+      setName(res.data.name);
+      setEmail(res.data.email);
+    } catch (err) {
+      console.error("Error obteniendo perfil:", err);
+      navigate("/login");
     }
   };
 
-  const addUser = async () => {
+  const handleUpdate = async () => {
+    setMessage("");
     try {
-      await axios.post("http://localhost:3000/api/users/register", {
-        name: newUserName,
-        email: newUserEmail,
-        password: newUserPassword,
-      }, { withCredentials: true });
-      setNewUserName("");
-      setNewUserEmail("");
-      setNewUserPassword("");
-      fetchUsers();
-    } catch (error) {
-      console.error("Error adding user", error);
+      const res = await axios.put(
+        "http://localhost:3000/api/users/profile",
+        { name, email, currentPassword, newPassword },
+        { withCredentials: true }
+      );
+      setUser(res.data.user);
+      setMessage("Perfil actualizado correctamente");
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (err: any) {
+      console.error(err);
+      setMessage(err.response?.data?.message || "Error al actualizar");
     }
   };
 
-  const deleteUser = async (id: number) => {
+  const handleLogout = async () => {
     try {
-      await axios.delete(`http://localhost:3000/api/users/${id}`, { withCredentials: true });
-      fetchUsers();
-    } catch (error) {
-      console.error("Error deleting user", error);
+      await axios.post("http://localhost:3000/api/users/logout", {}, { withCredentials: true });
+      setLoggedIn(false);
+      localStorage.removeItem("loggedIn");
+      navigate("/login");
+    } catch (err) {
+      console.error("Error al cerrar sesión:", err);
     }
   };
 
-  // 🔹 Tasks
-  const fetchTasks = async () => {
-    try {
-      const res = await axios.get("http://localhost:3000/api/tasks", { withCredentials: true });
-      setTasks(res.data);
-    } catch (error) {
-      console.error("Error fetching tasks", error);
-    }
-  };
-
-  const addTask = async () => {
-    try {
-      await axios.post("http://localhost:3000/api/tasks", {
-        title: newTaskTitle,
-        description: newTaskDescription,
-      }, { withCredentials: true });
-      setNewTaskTitle("");
-      setNewTaskDescription("");
-      fetchTasks();
-    } catch (error) {
-      console.error("Error adding task", error);
-    }
-  };
-
-  const deleteTask = async (id: number) => {
-    try {
-      await axios.delete(`http://localhost:3000/api/tasks/${id}`, { withCredentials: true });
-      fetchTasks();
-    } catch (error) {
-      console.error("Error deleting task", error);
-    }
-  };
+  if (!user) return <p>Cargando perfil...</p>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Bienvenido Sr. {userName}</h1>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-200 via-white to-blue-100 px-4">
+      <div className="bg-white shadow-xl rounded-2xl w-full max-w-lg p-8">
+        <h1 className="text-3xl font-bold text-center mb-6 text-blue-600">Perfil de Usuario</h1>
 
-      {/* Usuarios */}
-      <section>
-        <h2>Usuarios</h2>
-        <div>
-          <input placeholder="Nombre" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} />
-          <input placeholder="Email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
-          <input placeholder="Contraseña" value={newUserPassword} type="password" onChange={(e) => setNewUserPassword(e.target.value)} />
-          <button onClick={addUser}>Agregar Usuario</button>
-        </div>
-        <ul>
-          {users.map(user => (
-            <li key={user.id}>
-              {user.name} ({user.email}){" "}
-              <button onClick={() => deleteUser(user.id)}>Eliminar</button>
-            </li>
-          ))}
-        </ul>
-      </section>
+        <form className="space-y-5">
+          <div>
+            <label className="block text-left font-semibold mb-1">Nombre</label>
+            <input
+              type="text"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Tu nombre"
+            />
+          </div>
 
-      {/* Tasks */}
-      <section>
-        <h2>Tareas</h2>
-        <div>
-          <input placeholder="Título" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} />
-          <input placeholder="Descripción" value={newTaskDescription} onChange={(e) => setNewTaskDescription(e.target.value)} />
-          <button onClick={addTask}>Agregar Tarea</button>
-        </div>
-        <ul>
-          {tasks.map(task => (
-            <li key={task.id}>
-              {task.title} - {task.description}{" "}
-              <button onClick={() => deleteTask(task.id)}>Eliminar</button>
-            </li>
-          ))}
-        </ul>
-      </section>
+          <div>
+            <label className="block text-left font-semibold mb-1">Correo electrónico</label>
+            <input
+              type="email"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Tu correo"
+            />
+          </div>
+
+          <div>
+            <label className="block text-left font-semibold mb-1">
+              Contraseña actual (solo si deseas cambiarla)
+            </label>
+            <input
+              type="password"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div>
+            <label className="block text-left font-semibold mb-1">Nueva contraseña</label>
+            <input
+              type="password"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </div>
+
+          {message && (
+            <p className={`text-center font-semibold ${message.includes("correctamente") ? "text-green-500" : "text-red-500"}`}>
+              {message}
+            </p>
+          )}
+
+          <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4">
+            <button
+              type="button"
+              onClick={handleUpdate}
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-all duration-300"
+            >
+              Guardar cambios
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 rounded-lg transition-all duration-300"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

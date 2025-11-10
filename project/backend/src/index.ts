@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import session from 'express-session';
 import { AppDataSource } from './db/data-source';
 import userRoutes from './routes/userRoutes';
-import taskRoutes from './routes/taskRoutes';
 import { logger } from './middleware/logger';
 
 dotenv.config();
@@ -28,9 +27,7 @@ AppDataSource.initialize()
   .then(() => {
     console.log("✅ Base de datos conectada");
 
-    // Rutas
     app.use("/api/users", userRoutes);
-    app.use("/api/tasks", taskRoutes);
 
     app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
   })
